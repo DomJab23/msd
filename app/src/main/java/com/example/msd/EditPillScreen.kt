@@ -14,14 +14,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.msd.ui.theme.MsdTheme
 
 @Composable
-fun LoginScreen(onLoginClicked: () -> Unit) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun EditPillScreen(pill: Pill, onPillUpdated: (Pill) -> Unit, onBackPressed: () -> Unit) {
+    var pillName by remember { mutableStateOf(pill.name) }
 
     Column(
         modifier = Modifier
@@ -30,26 +27,23 @@ fun LoginScreen(onLoginClicked: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Text("Date: ${pill.date}")
+        Text("Time: ${pill.time}")
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Username") }
+            value = pillName,
+            onValueChange = { pillName = it },
+            label = { Text("Pill Name") },
+            modifier = Modifier.padding(top = 16.dp)
         )
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") }
-        )
-        Button(onClick = onLoginClicked, modifier = Modifier.padding(top = 16.dp)) {
-            Text("Go to Pill Logging")
+        Button(
+            onClick = { onPillUpdated(pill.copy(name = pillName)) },
+            modifier = Modifier.padding(top = 16.dp),
+            enabled = pillName.isNotBlank()
+        ) {
+            Text("Save")
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    MsdTheme {
-        LoginScreen(onLoginClicked = {})
+        Button(onClick = onBackPressed, modifier = Modifier.padding(top = 8.dp)) {
+            Text("Back")
+        }
     }
 }
