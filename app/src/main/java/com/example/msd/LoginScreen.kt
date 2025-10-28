@@ -1,5 +1,6 @@
 package com.example.msd
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,10 +24,26 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.msd.ui.theme.MsdTheme
 
+object DatabaseProvider {
+    @Volatile
+    private var INSTANCE: AppDatabase? = null
 
+    fun getDatabase(context: Context): AppDatabase {
+        return INSTANCE ?: synchronized(this) {
+            val instance = Room.databaseBuilder(
+                context.applicationContext,
+                AppDatabase::class.java,
+                "app_database"
+            ).build()
+            INSTANCE = instance
+            instance
+        }
+    }
+}
 @Entity(tableName = "users")
 data class User(
     @PrimaryKey val username: String,
@@ -52,6 +69,7 @@ fun hashPassword(password: String): String = password.reversed()
 fun LoginScreen(onLoginClicked: () -> Unit) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("")}
 
     Column(
         modifier = Modifier
@@ -70,7 +88,17 @@ fun LoginScreen(onLoginClicked: () -> Unit) {
             onValueChange = { password = it },
             label = { Text("Password") }
         )
-        Button(onClick = onLoginClicked, modifier = Modifier.padding(top = 16.dp)) {
+        if (errorMessage.isNotEmpty()) {
+            Text(text = errorMessage, color = androidx.compose.ui.graphics.Color.Red, modifier = Modifier.padding(top = 8.dp))
+        }
+        Button(onClick = {
+            if (username == "care" && password == "care") {
+                errorMessage = ""
+                onLoginClicked()
+            } else {
+                errorMessage = "Invalid username or password"
+            }
+        }, modifier = Modifier.padding(top = 16.dp)) {
             Text("Go to Pill Logging")
         }
     }
