@@ -15,6 +15,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -22,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.msd.ui.theme.MsdTheme
+import com.example.msd.ui.theme.getTypography
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -33,9 +38,9 @@ class MainActivity : ComponentActivity() {
         createNotificationChannel()
         enableEdgeToEdge()
         setContent {
-            MsdTheme {
-                MyApp()
-            }
+            // State is now managed in MyApp, but MsdTheme needs to wrap it.
+            // MyApp will internally wrap its content with MsdTheme.
+            MyApp()
         }
     }
 
@@ -57,75 +62,100 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("DefaultLocale")
 @Composable
 fun MyApp() {
-    val context = LocalContext.current
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "login") {
-        composable("login") {
-            LoginScreen(onLoginClicked = { navController.navigate("main") })
-        }
-        composable("main") {
-            MainScreen(mainNavController = navController)
-        }
-        composable("calendar") {
-            CalendarScreen(
-                onBackPressed = { navController.popBackStack() },
-                onSubmit = { date, pillName ->
-                    val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(date))
-                    val formattedTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-                    PillRepository.addPill(Pill(0, pillName, formattedDate, formattedTime))
-                    Toast.makeText(context, "Pill '$pillName' saved!", Toast.LENGTH_SHORT).show()
-                    navController.popBackStack()
+    // 1. Hoist the theme and font size state here
+    var darkTheme by remember { mutableStateOf(false) }
+    var fontSize by remember { mutableStateOf(16f) }
+    val typography = getTypography(baseFontSize = fontSize)
+    // 2. Apply the theme at this top level
+    MsdTheme(darkTheme = darkTheme,
+                typography = typography
+    ) {
+        val context = LocalContext.current
+        val navController = rememberNavController()
+        NavHost(navController = navController, startDestination = "login") {
+            composable("login") {
+                LoginScreen(onLoginClicked = { navController.navigate("main") })
+            }
+            composable("main") {
+                // Pass the state and callbacks down to MainScreen
+                MainScreen(
+                    mainNavController = navController,
+                    darkTheme = darkTheme,
+                    onThemeChange = { darkTheme = it },
+                    fontSize = fontSize,
+                    onFontSizeChange = { fontSize = it }
+                )
+            }
+            // 3. Add a new route for the SettingsScreen
+            composable("settings") {
+                SettingsScreen(
+                    darkTheme = darkTheme,
+                    onThemeChange = { darkTheme = it },
+                    fontSize = fontSize,
+                    onFontSizeChange = { fontSize = it }
+                )
+            }
+            composable("calendar") {
+                CalendarScreen(
+                    onBackPressed = { navController.popBackStack() },
+                    onSubmit = { date, pillName ->
+                        val formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(date))
+                        val formattedTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                        PillRepository.addPill(Pill(0, pillName, formattedDate, formattedTime))
+                        Toast.makeText(context, "Pill '$pillName' saved!", Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    }
+                )
+            }
+            composable(
+                "edit_pill/{pillId}",
+                arguments = listOf(navArgument("pillId") { type = NavType.LongType })
+            ) {
+                val pillId = it.arguments?.getLong("pillId")
+                val pill = PillRepository.getPillById(pillId!!)
+                if (pill != null) {
+                    EditPillScreen(
+                        pill = pill,
+                        onPillUpdated = { updatedPill ->
+                            PillRepository.updatePill(updatedPill)
+                            Toast.makeText(context, "Pill '${updatedPill.name}' updated!", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        },
+                        onBackPressed = { navController.popBackStack() }
+                    )
                 }
-            )
-        }
-        composable(
-            "edit_pill/{pillId}",
-            arguments = listOf(navArgument("pillId") { type = NavType.LongType })
-        ) {
-            val pillId = it.arguments?.getLong("pillId")
-            val pill = PillRepository.getPillById(pillId!!)
-            if (pill != null) {
-                EditPillScreen(
-                    pill = pill,
-                    onPillUpdated = { updatedPill ->
-                        PillRepository.updatePill(updatedPill)
-                        Toast.makeText(context, "Pill '${updatedPill.name}' updated!", Toast.LENGTH_SHORT).show()
+            }
+            composable("add_reminder") {
+                AddReminderScreen(
+                    onAddReminder = { pillName, hour, minute ->
+                        val time = String.format("%02d:%02d", hour, minute)
+                        val newReminder = ReminderRepository.addReminder(Reminder(0, pillName, time))
+                        scheduleNotification(context, newReminder)
+                        Toast.makeText(context, "Reminder for '$pillName' saved!", Toast.LENGTH_SHORT).show()
                         navController.popBackStack()
                     },
                     onBackPressed = { navController.popBackStack() }
                 )
             }
-        }
-        composable("add_reminder") {
-            AddReminderScreen(
-                onAddReminder = { pillName, hour, minute ->
-                    val time = String.format("%02d:%02d", hour, minute)
-                    val newReminder = ReminderRepository.addReminder(Reminder(0, pillName, time))
-                    scheduleNotification(context, newReminder)
-                    Toast.makeText(context, "Reminder for '$pillName' saved!", Toast.LENGTH_SHORT).show()
-                    navController.popBackStack()
-                },
-                onBackPressed = { navController.popBackStack() }
-            )
-        }
-        composable(
-            "edit_reminder/{reminderId}",
-            arguments = listOf(navArgument("reminderId") { type = NavType.LongType })
-        ) {
-            val reminderId = it.arguments?.getLong("reminderId")
-            val reminder = ReminderRepository.getReminderById(reminderId!!)
-            if (reminder != null) {
-                EditReminderScreen(
-                    reminder = reminder,
-                    onReminderUpdated = { updatedReminder ->
-                        cancelNotification(context, reminder)
-                        ReminderRepository.updateReminder(updatedReminder)
-                        scheduleNotification(context, updatedReminder)
-                        Toast.makeText(context, "Reminder for '${updatedReminder.pillName}' updated!", Toast.LENGTH_SHORT).show()
-                        navController.popBackStack()
-                    },
-                    onBackPressed = { navController.popBackStack() }
-                )
+            composable(
+                "edit_reminder/{reminderId}",
+                arguments = listOf(navArgument("reminderId") { type = NavType.LongType })
+            ) {
+                val reminderId = it.arguments?.getLong("reminderId")
+                val reminder = ReminderRepository.getReminderById(reminderId!!)
+                if (reminder != null) {
+                    EditReminderScreen(
+                        reminder = reminder,
+                        onReminderUpdated = { updatedReminder ->
+                            cancelNotification(context, reminder)
+                            ReminderRepository.updateReminder(updatedReminder)
+                            scheduleNotification(context, updatedReminder)
+                            Toast.makeText(context, "Reminder for '${updatedReminder.pillName}' updated!", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        },
+                        onBackPressed = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

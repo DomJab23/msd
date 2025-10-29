@@ -29,7 +29,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 @Composable
-fun MainScreen(mainNavController: NavController) {
+fun MainScreen(    mainNavController: NavController,
+                   darkTheme: Boolean,
+                   onThemeChange: (Boolean) -> Unit,
+                   fontSize: Float,
+                   onFontSizeChange: (Float) -> Unit
+) {
     val navController = rememberNavController()
     var refreshTrigger by remember { mutableStateOf(0) }
     val context = LocalContext.current
@@ -96,7 +101,10 @@ fun MainScreen(mainNavController: NavController) {
                 ProfileScreen(onLogoffClicked = { mainNavController.popBackStack() })
             }
             composable("settings") {
-                SettingsScreen()
+                SettingsScreen(darkTheme = darkTheme,
+                    onThemeChange = onThemeChange,
+                    fontSize = fontSize,
+                    onFontSizeChange = onFontSizeChange)
             }
         }
     }
