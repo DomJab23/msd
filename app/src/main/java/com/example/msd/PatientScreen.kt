@@ -20,6 +20,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
+
+
 
 @Composable
 fun PatientScreen(
@@ -49,7 +53,7 @@ fun PatientScreen(
     ) {
         NavHost(
             navController = navController,
-            startDestination = "reminders",
+            startDestination = "pills",
             modifier = Modifier.padding(it)
         ) {
             composable("reminders") {
@@ -73,13 +77,16 @@ fun PatientScreen(
                 )
             }
             composable("pills") {
-                PillLoggingScreen(
+                ViewPillListScreen(
                     pills = PillRepository.getPills() ?: emptyList(),
-                    onEditPillClicked = { pillId ->
-                        mainNavController.navigate("edit_pill/$pillId")
+                    onPillClicked = { pillId ->
+                        navController.navigate("view_pill/$pillId")
                     }
                 )
             }
+
+
+
             composable("settings") {
                 SettingsScreen(darkTheme = darkTheme,
                     onThemeChange = onThemeChange,
