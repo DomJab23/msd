@@ -53,12 +53,11 @@ fun PatientScreen(
             modifier = Modifier.padding(it)
         ) {
             composable("pills") {
-                PillLoggingScreen(
-                    pills = PillRepository.getPills() ?: emptyList(),
-                    onEditPillClicked = { pillId ->
-                        mainNavController.navigate("edit_pill/$pillId")
-                    }
+                val samplePills = listOf(
+                    Pill(1, "Aspirin", "2024-01-01", "10:00"),
+                    Pill(2, "Ibuprofen", "2024-01-02", "12:30")
                 )
+                PatientHomeScreen(({}),samplePills)
             }
             composable("reminders") {
                 RemindersScreen(
