@@ -105,13 +105,19 @@ fun MainScreen(    mainNavController: NavController,
                     }
                 })
             }
-
             composable("settings") {
                 SettingsScreen(darkTheme = darkTheme,
                     onThemeChange = onThemeChange,
                     fontSize = fontSize,
-                    onFontSizeChange = onFontSizeChange)
+                    onFontSizeChange = onFontSizeChange,
+                    onLogoffClicked = {
+                    mainNavController.navigate("login") {
+                        popUpTo("login") { inclusive = true }
+                        launchSingleTop = true
+                    } })
             }
+
+
         }
     }
 }

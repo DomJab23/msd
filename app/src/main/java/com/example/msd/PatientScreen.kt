@@ -49,17 +49,9 @@ fun PatientScreen(
     ) {
         NavHost(
             navController = navController,
-            startDestination = "pills",
+            startDestination = "reminders",
             modifier = Modifier.padding(it)
         ) {
-            composable("pills") {
-                PillLoggingScreen(
-                    pills = PillRepository.getPills() ?: emptyList(),
-                    onEditPillClicked = { pillId ->
-                        mainNavController.navigate("edit_pill/$pillId")
-                    }
-                )
-            }
             composable("reminders") {
                 RemindersScreen(
                     reminders = ReminderRepository.getReminders() ?: emptyList(),
@@ -80,13 +72,24 @@ fun PatientScreen(
                     }
                 )
             }
+            composable("pills") {
+                PillLoggingScreen(
+                    pills = PillRepository.getPills() ?: emptyList(),
+                    onEditPillClicked = { pillId ->
+                        mainNavController.navigate("edit_pill/$pillId")
+                    }
+                )
+            }
             composable("settings") {
-                SettingsScreen(
-                    darkTheme = darkTheme,
+                SettingsScreen(darkTheme = darkTheme,
                     onThemeChange = onThemeChange,
                     fontSize = fontSize,
-                    onFontSizeChange = onFontSizeChange
-                )
+                    onFontSizeChange = onFontSizeChange,
+                    onLogoffClicked = {
+                        mainNavController.navigate("login") {
+                            popUpTo("login") { inclusive = true }
+                            launchSingleTop = true
+                        } })
             }
         }
     }
