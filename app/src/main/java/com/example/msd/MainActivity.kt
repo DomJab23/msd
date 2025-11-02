@@ -74,7 +74,7 @@ fun MyApp() {
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = "login") {
             composable("login") {
-                LoginScreen(onLoginClicked = { navController.navigate("main") })
+                LoginScreen(navController = navController)
             }
             composable("main") {
                 // Pass the state and callbacks down to MainScreen
@@ -107,6 +107,16 @@ fun MyApp() {
                     }
                 )
             }
+            composable("patient") {
+                PatientScreen(
+                    mainNavController = navController,
+                    darkTheme = darkTheme,
+                    onThemeChange = { darkTheme = it },
+                    fontSize = fontSize,
+                    onFontSizeChange = { fontSize = it }
+                )
+            }
+
             composable(
                 "edit_pill/{pillId}",
                 arguments = listOf(navArgument("pillId") { type = NavType.LongType })

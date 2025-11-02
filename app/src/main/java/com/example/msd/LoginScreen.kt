@@ -29,6 +29,11 @@ import androidx.room.RoomDatabase
 import com.example.msd.ui.theme.MsdTheme
 import java.security.MessageDigest
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+
 
 object DatabaseProvider {
     @Volatile
@@ -70,12 +75,14 @@ fun hashPassword(password: String): String {
     val bytes = md.digest(password.toByteArray())
     return bytes.joinToString("") { "%02x".format(it) }
 }
-
 @Composable
-fun LoginScreen(onLoginClicked: () -> Unit) {
+fun LoginScreen(navController: NavController) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf("")}
+    var errorMessage by remember { mutableStateOf("") }
+
+    val careUsername = "care"
+    val carePasswordHash = hashPassword("care")
 
     Column(
         modifier = Modifier
@@ -84,33 +91,78 @@ fun LoginScreen(onLoginClicked: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        OutlinedTextField(
+        androidx.compose.material3.OutlinedTextField(
             value = username,
             onValueChange = { username = it },
             label = { Text("Username") }
         )
-        OutlinedTextField(
+        androidx.compose.material3.OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation()
         )
         if (errorMessage.isNotEmpty()) {
-            Text(text = errorMessage, color = androidx.compose.ui.graphics.Color.Red, modifier = Modifier.padding(top = 8.dp))
+            Text(
+                text = errorMessage,
+                color = androidx.compose.ui.graphics.Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
 
-        val expectedUsername = "care"
-        val expectedPasswordHash = hashPassword("care")
-        Button(onClick = {
-            if (username == expectedUsername && hashPassword(password) == expectedPasswordHash) {
-                errorMessage = ""
-                onLoginClicked()
-            } else {
-                errorMessage = "Invalid username or password"
-            }
-        }, modifier = Modifier.padding(top = 16.dp)) {
-            Text("Go to Pill Logging")
+        Button(
+            onClick = {
+                when {
+                    username == careUsername && hashPassword(password) == carePasswordHash -> {
+                        errorMessage = ""
+                        navController.navigate("main") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    }
+                    username == "user" && password == "user" -> {
+                        errorMessage = ""
+                        navController.navigate("patient") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    }
+                    else -> {
+                        errorMessage = "Invalid username or password"
+                    }
+                }
+            },
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text("Login")
         }
+    }
+}
+
+@Composable
+fun AppNavHost() {
+    val navController = rememberNavController()
+    NavHost(navController = navController, startDestination = "login") {
+        composable("login") {
+            LoginScreen(navController = navController)
+        }
+        composable("main") {
+            MainScreen(
+                mainNavController = navController,
+                darkTheme = false,
+                onThemeChange = {},
+                fontSize = 16f,
+                onFontSizeChange = {}
+            )
+        }
+        composable("patient") {
+            PatientScreen(
+                mainNavController = navController,
+                darkTheme = false,
+                onThemeChange = {},
+                fontSize = 16f,
+                onFontSizeChange = {}
+            )
+        }
+        // other routes...
     }
 }
 
@@ -118,6 +170,7 @@ fun LoginScreen(onLoginClicked: () -> Unit) {
 @Composable
 fun LoginScreenPreview() {
     MsdTheme {
-        LoginScreen(onLoginClicked = {})
+        val navController = rememberNavController()
+        LoginScreen(navController = navController)
     }
 }
