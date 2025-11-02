@@ -92,7 +92,12 @@ fun MyApp() {
                     darkTheme = darkTheme,
                     onThemeChange = { darkTheme = it },
                     fontSize = fontSize,
-                    onFontSizeChange = { fontSize = it }
+                    onFontSizeChange = { fontSize = it },
+                    onLogoffClicked = {
+                        navController.navigate("login") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    }
                 )
             }
             composable("calendar") {

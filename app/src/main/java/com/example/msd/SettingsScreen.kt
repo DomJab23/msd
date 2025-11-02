@@ -16,13 +16,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.msd.ui.theme.MsdTheme
+import androidx.compose.material3.Button
+
 
 @Composable
 fun SettingsScreen(
     darkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
     fontSize: Float,
-    onFontSizeChange: (Float) -> Unit
+    onFontSizeChange: (Float) -> Unit,
+    onLogoffClicked: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -56,6 +59,12 @@ fun SettingsScreen(
                 steps = 5
             )
         }
+        Button(
+            onClick = onLogoffClicked,
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text("Logoff")
+        }
     }
 }
 
@@ -69,7 +78,8 @@ fun SettingsScreenPreview() {
             darkTheme = false,
             onThemeChange = {},
             fontSize = 16f,
-            onFontSizeChange = {}
+            onFontSizeChange = {},
+            onLogoffClicked = {}
         )
     }
 }
