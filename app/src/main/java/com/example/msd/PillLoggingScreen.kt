@@ -26,7 +26,7 @@ fun PillLoggingScreen(pills: List<Pill>, onEditPillClicked: (Long) -> Unit) {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Your Logged Pills", modifier = Modifier.padding(bottom = 16.dp))
+        Text("Logged Pills", modifier = Modifier.padding(bottom = 16.dp))
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(pills) { pill ->
                 Card(

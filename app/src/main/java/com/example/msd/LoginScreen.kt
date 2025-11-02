@@ -27,6 +27,8 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.msd.ui.theme.MsdTheme
+import java.security.MessageDigest
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 
 object DatabaseProvider {
     @Volatile
@@ -63,7 +65,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
 }
 
-fun hashPassword(password: String): String = password.reversed()
+fun hashPassword(password: String): String {
+    val md = MessageDigest.getInstance("SHA-256")
+    val bytes = md.digest(password.toByteArray())
+    return bytes.joinToString("") { "%02x".format(it) }
+}
 
 @Composable
 fun LoginScreen(onLoginClicked: () -> Unit) {
@@ -86,13 +92,17 @@ fun LoginScreen(onLoginClicked: () -> Unit) {
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") }
+            label = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation()
         )
         if (errorMessage.isNotEmpty()) {
             Text(text = errorMessage, color = androidx.compose.ui.graphics.Color.Red, modifier = Modifier.padding(top = 8.dp))
         }
+
+        val expectedUsername = "care"
+        val expectedPasswordHash = hashPassword("care")
         Button(onClick = {
-            if (username == "care" && password == "care") {
+            if (username == expectedUsername && hashPassword(password) == expectedPasswordHash) {
                 errorMessage = ""
                 onLoginClicked()
             } else {

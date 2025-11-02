@@ -40,7 +40,7 @@ fun RemindersScreen(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Your Reminders", modifier = Modifier.padding(bottom = 16.dp))
+        Text("Set up reminders", modifier = Modifier.padding(bottom = 16.dp))
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(reminders) { reminder ->
                 Card(
