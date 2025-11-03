@@ -85,7 +85,12 @@ fun PatientScreen(
                     darkTheme = darkTheme,
                     onThemeChange = onThemeChange,
                     fontSize = fontSize,
-                    onFontSizeChange = onFontSizeChange
+                    onFontSizeChange = onFontSizeChange,
+                    onLogoffClicked = {
+                        navController.navigate("login") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    }
                 )
             }
         }
