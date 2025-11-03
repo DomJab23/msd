@@ -3,6 +3,7 @@ package com.example.msd
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BottomAppBar
@@ -30,16 +31,15 @@ fun PatientScreen(
     onFontSizeChange: (Float) -> Unit
 ) {
     val navController = rememberNavController()
-    var refreshTrigger by remember { mutableStateOf(0) }
 
     Scaffold(
         bottomBar = {
             BottomAppBar {
+                IconButton(onClick = { navController.navigate("home") }, modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Default.Home, contentDescription = "Home")
+                }
                 IconButton(onClick = { navController.navigate("pills") }, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Default.DateRange, contentDescription = "Pills")
-                }
-                IconButton(onClick = { navController.navigate("reminders") }, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.Default.Notifications, contentDescription = "Reminders")
                 }
                 IconButton(onClick = { navController.navigate("settings") }, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Default.Settings, contentDescription = "Settings")
@@ -49,35 +49,17 @@ fun PatientScreen(
     ) {
         NavHost(
             navController = navController,
-            startDestination = "pills",
+            startDestination = "home",
             modifier = Modifier.padding(it)
         ) {
-            composable("pills") {
-                PillLoggingScreen(
-                    pills = PillRepository.getPills() ?: emptyList(),
-                    onEditPillClicked = { pillId ->
-                        mainNavController.navigate("edit_pill/$pillId")
-                    }
-                )
+            composable("home") {
+                PatientHomeScreen(({}),
+                    pills = PillRepository.getPills() ?: emptyList())
             }
-            composable("reminders") {
-                RemindersScreen(
-                    reminders = ReminderRepository.getReminders() ?: emptyList(),
-                    onAddReminderClicked = { mainNavController.navigate("add_reminder") },
-                    onEditReminderClicked = { reminderId ->
-                        mainNavController.navigate("edit_reminder/$reminderId")
-                    },
-                    onDeleteReminderClicked = { reminderId ->
-                        val reminder = ReminderRepository.getReminderById(reminderId)
-                        if (reminder != null) {
-                            ReminderRepository.deleteReminder(reminderId)
-                        }
-                        refreshTrigger++
-                    },
-                    onDoneClicked = { reminder ->
-                        ReminderRepository.updateReminder(reminder.copy(isDone = true))
-                        refreshTrigger++
-                    }
+            composable("pills") {
+                ViewPillListScreen(
+                    pills = PillRepository.getPills() ?: emptyList(),
+                    onPillClicked = ({})
                 )
             }
             composable("settings") {
@@ -87,8 +69,9 @@ fun PatientScreen(
                     fontSize = fontSize,
                     onFontSizeChange = onFontSizeChange,
                     onLogoffClicked = {
-                        navController.navigate("login") {
+                        mainNavController.navigate("login") {
                             popUpTo("login") { inclusive = true }
+                            launchSingleTop = true
                         }
                     }
                 )
